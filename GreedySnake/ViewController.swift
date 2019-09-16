@@ -45,7 +45,7 @@ class ViewController: UIViewController {
         
         outputs.removeBody = { [weak self] (body) in
             guard let self = self else { return }
-            if let subview = self.view.viewWithTag(0) {
+            if let subview = self.view.viewWithTag(1) {
                 subview.removeFromSuperview()
             }
         }
@@ -76,7 +76,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     var updateBody: ((SnakeBody) -> Void)?
     var removeBody: ((SnakeBody) -> Void)?
     
-    private var tag = 0
+    private var tag = 1
     
     func updatePoint(x: Int, y: Int) {
         let snakeBody = SnakeBody(x: x, y: y, tag: tag)
