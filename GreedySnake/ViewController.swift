@@ -18,11 +18,17 @@ class ViewController: UIViewController {
         
         var x = Int(UIScreen.main.bounds.midX)
         let y = Int(UIScreen.main.bounds.midY)
+        
         viewModel.inputs.updatePoint(x: x, y: y)
         
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { (_) in
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             self.viewModel.inputs.removePoint(x: x, y: y)
-            x += 10
+            
+            if x >= Int(UIScreen.main.bounds.maxX) {
+                x = -25
+            } else {
+                x += 10
+            }
             self.viewModel.inputs.updatePoint(x: x, y: y)
         }
     }
@@ -39,8 +45,9 @@ class ViewController: UIViewController {
         
         outputs.removeBody = { [weak self] (body) in
             guard let self = self else { return }
-            let subview = self.view.viewWithTag(body.tag)!
-            subview.removeFromSuperview()
+            if let subview = self.view.viewWithTag(0) {
+                subview.removeFromSuperview()
+            }
         }
     }
     
