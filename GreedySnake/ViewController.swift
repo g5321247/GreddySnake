@@ -10,26 +10,29 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    let viewModel = ViewModel()
+    var viewModel: ViewModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        viewModel = ViewModel(
+            startPoint: .init(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY)), bound: .init(x: Int(UIScreen.main.bounds.maxX), y: Int(UIScreen.main.bounds.maxY))
+        )
         bindViewModel()
         
-        var x = Int(UIScreen.main.bounds.midX)
-        let y = Int(UIScreen.main.bounds.midY)
+        viewModel.inputs.start()
         
-        viewModel.inputs.updatePoint(x: x, y: y)
-        
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
-            self.viewModel.inputs.removePoint(x: x, y: y)
-            
-            if x >= Int(UIScreen.main.bounds.maxX) {
-                x = -25
-            } else {
-                x += 10
-            }
-            self.viewModel.inputs.updatePoint(x: x, y: y)
+        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
+        swipeUp.direction = .up
+        self.view.addGestureRecognizer(swipeUp)
+    }
+    
+    @objc func handleGesture(gesture: UISwipeGestureRecognizer) -> Void {
+        switch gesture.direction {
+        case .up:
+            viewModel.inputs.updateDirection(direction: .up)
+        default:
+            break
         }
     }
     
@@ -43,9 +46,9 @@ class ViewController: UIViewController {
             self.view.addSubview(snakeBodyView)
         }
         
-        outputs.removeBody = { [weak self] (body) in
+        outputs.removeBody = { [weak self] (tag) in
             guard let self = self else { return }
-            if let subview = self.view.viewWithTag(1) {
+            if let subview = self.view.viewWithTag(tag) {
                 subview.removeFromSuperview()
             }
         }
@@ -59,13 +62,13 @@ class ViewController: UIViewController {
 }
 
 protocol ViewModelInputs {
-    func updatePoint(x: Int, y: Int)
-    func removePoint(x: Int, y: Int)
+    func updateDirection(direction: ViewModel.Direction)
+    func start()
 }
 
 protocol ViewModelOutputs {
     var updateBody: ((SnakeBody) -> Void)? { get set }
-    var removeBody: ((SnakeBody) -> Void)? { get set }
+    var removeBody: ((Int) -> Void)? { get set }
 }
 
 class ViewModel: ViewModelInputs, ViewModelOutputs {
@@ -74,19 +77,59 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     var outputs: ViewModelOutputs { return self }
     
     var updateBody: ((SnakeBody) -> Void)?
-    var removeBody: ((SnakeBody) -> Void)?
+    var removeBody: ((Int) -> Void)?
     
     private var tag = 1
+    private var direction: Direction = .right
+    private var currentPoint: Point
+    private var boundPoint: Point
     
-    func updatePoint(x: Int, y: Int) {
-        let snakeBody = SnakeBody(x: x, y: y, tag: tag)
-        
-        updateBody?(snakeBody)
+    init(startPoint: Point, bound: Point) {
+        currentPoint = startPoint
+        boundPoint = bound
     }
     
-    func removePoint(x: Int, y: Int) {
-        let snakeBody = SnakeBody(x: x, y: y, tag: tag)
-        
-        removeBody?(snakeBody)
+    func start() {
+
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
+            self.removeBody?(self.tag)
+            
+            switch self.direction {
+            case .up:
+                if self.currentPoint.y <= 0 {
+                    self.currentPoint.y = self.boundPoint.y + 25
+                } else {
+                    self.currentPoint.y -= 10
+                    print(self.currentPoint.y)
+                }
+            case .right:
+                self.currentPoint.x >= self.boundPoint.x ? (self.currentPoint.x = -25) : (self.currentPoint.x += 10)
+            default:
+                break
+            }
+            
+            let snakeBody = SnakeBody(x: self.currentPoint.x, y: self.currentPoint.y, tag: self.tag)
+            
+            self.updateBody?(snakeBody)
+        }.fire()
+    }
+    
+    func updateDirection(direction: Direction) {
+        self.direction = direction
+    }
+}
+
+extension ViewModel {
+    
+    enum Direction {
+        case right
+        case up
+        case left
+        case down
+    }
+    
+    struct Point {
+        var x: Int
+        var y: Int
     }
 }
