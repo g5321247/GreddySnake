@@ -21,16 +21,35 @@ class ViewController: UIViewController {
         bindViewModel()
         
         viewModel.inputs.start()
-        
-        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
-        swipeUp.direction = .up
-        self.view.addGestureRecognizer(swipeUp)
+        setupUI()
     }
     
-    @objc func handleGesture(gesture: UISwipeGestureRecognizer) -> Void {
+    private func setupUI() {
+        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
+        swipeUp.direction = .up
+        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
+        swipeDown.direction = .down
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
+        swipeLeft.direction = .left
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
+        swipeRight.direction = .right
+        
+        self.view.addGestureRecognizer(swipeUp)
+        self.view.addGestureRecognizer(swipeDown)
+        self.view.addGestureRecognizer(swipeLeft)
+        self.view.addGestureRecognizer(swipeRight)
+    }
+    
+    @objc func handleGesture(gesture: UISwipeGestureRecognizer) {
         switch gesture.direction {
         case .up:
             viewModel.inputs.updateDirection(direction: .up)
+        case .down:
+            viewModel.inputs.updateDirection(direction: .down)
+        case .right:
+            viewModel.inputs.updateDirection(direction: .right)
+        case .left:
+            viewModel.inputs.updateDirection(direction: .left)
         default:
             break
         }
@@ -80,7 +99,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     var removeBody: ((Int) -> Void)?
     
     private var tag = 1
-    private var direction: Direction = .right
+    private var direction: Direction = .left
     private var currentPoint: Point
     private var boundPoint: Point
     
@@ -93,25 +112,24 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
 
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             self.removeBody?(self.tag)
-            
-            switch self.direction {
-            case .up:
-                if self.currentPoint.y <= 0 {
-                    self.currentPoint.y = self.boundPoint.y + 25
-                } else {
-                    self.currentPoint.y -= 10
-                    print(self.currentPoint.y)
-                }
-            case .right:
-                self.currentPoint.x >= self.boundPoint.x ? (self.currentPoint.x = -25) : (self.currentPoint.x += 10)
-            default:
-                break
-            }
+            self.updatePosition()
             
             let snakeBody = SnakeBody(x: self.currentPoint.x, y: self.currentPoint.y, tag: self.tag)
-            
             self.updateBody?(snakeBody)
         }.fire()
+    }
+    
+    private func updatePosition() {
+        switch direction {
+        case .up:
+            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 25) : (currentPoint.y -= 10)
+        case .left:
+            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 25) : (currentPoint.x -= 10)
+        case .down:
+            currentPoint.y >= boundPoint.y ? (currentPoint.y = -25) : (currentPoint.y += 10)
+        case .right:
+            currentPoint.x >= boundPoint.x ? (currentPoint.x = -25) : (currentPoint.x += 10)
+        }
     }
     
     func updateDirection(direction: Direction) {
