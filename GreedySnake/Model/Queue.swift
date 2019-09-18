@@ -30,4 +30,8 @@ struct Queue<T> {
     func peek() -> T? {
         return array.first
     }
+    
+    mutating func clearQueue() {
+        array.removeAll()
+    }
 }

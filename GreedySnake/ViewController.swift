@@ -16,11 +16,13 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel = ViewModel(
-            startPoint: .init(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY)), bound: .init(x: Int(UIScreen.main.bounds.maxX), y: Int(UIScreen.main.bounds.maxY))
+           bound: .init(x: Int(UIScreen.main.bounds.maxX), y: Int(UIScreen.main.bounds.maxY))
         )
         bindViewModel()
         
-        viewModel.inputs.start()
+        viewModel.inputs.start(startPoint:
+            .init(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY))
+        )
         setupUI()
     }
     
@@ -84,12 +86,17 @@ class ViewController: UIViewController {
         outputs.showMessage = { [weak self] (message) in
             let alertVc = UIAlertController(title: "Game Over", message: message, preferredStyle: .alert)
             let action = UIAlertAction(title: "確定", style: .default, handler: { (_) in
-                // TODO: Restart
+                self?.restart(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY))
             })
             
             alertVc.addAction(action)
             self?.present(alertVc, animated: true, completion: nil)
         }
+    }
+    
+    private func restart(x: Int, y: Int) {
+        view.subviews.forEach { $0.removeFromSuperview()}
+        viewModel.inputs.start(startPoint: .init(x: x, y: y))
     }
     
     private func createSnakeBody(x: CGFloat, y: CGFloat) -> UIView {
@@ -101,7 +108,7 @@ class ViewController: UIViewController {
 
 protocol ViewModelInputs {
     func updateDirection(direction: ViewModel.Direction)
-    func start()
+    func start(startPoint: ViewModel.Point)
     func eatApple()
 }
 
@@ -122,24 +129,31 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     
     private var lastBodyTag = 1
     private var direction: Direction = .left
-    private var currentPoint: Point
+    private var currentPoint: Point!
     private var boundPoint: Point
     private var snakeBodyQueue = Queue<SnakeBody>()
     private var timer: Timer!
     
-    init(startPoint: Point, bound: Point) {
-        currentPoint = startPoint
+    init(bound: Point) {
         boundPoint = bound
     }
     
-    func start() {
-       timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
+    func start(startPoint: Point) {
+        currentPoint = startPoint
+        setDefault()
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             let firstTag = self.removeFirstBody()
             self.updatePosition()
             self.addBody(with: firstTag)
         }
         
         timer.fire()
+    }
+    
+    private func setDefault() {
+        snakeBodyQueue.clearQueue()
+        direction = .left
     }
     
     private func removeFirstBody() -> Int {
