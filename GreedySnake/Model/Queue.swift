@@ -10,11 +10,12 @@ import Foundation
 
 struct Queue<T> {
     
-    private var array: [T] = []
+    private(set) var array: [T] = []
     
     var isEmpty: Bool {
         return array.isEmpty
     }
+    
     mutating func enqueue(_ element: T) {
         array.append(element)
     }

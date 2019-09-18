@@ -38,6 +38,11 @@ class ViewController: UIViewController {
         self.view.addGestureRecognizer(swipeDown)
         self.view.addGestureRecognizer(swipeLeft)
         self.view.addGestureRecognizer(swipeRight)
+        
+        // 測試
+        let touch = UITapGestureRecognizer(target: self, action: #selector(tap))
+        view.addGestureRecognizer(touch)
+
     }
     
     @objc func handleGesture(gesture: UISwipeGestureRecognizer) {
@@ -55,6 +60,10 @@ class ViewController: UIViewController {
         }
     }
     
+    @objc func tap(gesture: UITapGestureRecognizer) {
+        viewModel.inputs.eatApple()
+    }
+
     private func bindViewModel() {
         var outputs = viewModel.outputs
         
@@ -71,10 +80,20 @@ class ViewController: UIViewController {
                 subview.removeFromSuperview()
             }
         }
+        
+        outputs.showMessage = { [weak self] (message) in
+            let alertVc = UIAlertController(title: "Game Over", message: message, preferredStyle: .alert)
+            let action = UIAlertAction(title: "確定", style: .default, handler: { (_) in
+                // TODO: Restart
+            })
+            
+            alertVc.addAction(action)
+            self?.present(alertVc, animated: true, completion: nil)
+        }
     }
     
     private func createSnakeBody(x: CGFloat, y: CGFloat) -> UIView {
-        let view = UIView(frame: CGRect(x: x, y: y, width: 30, height: 30))
+        let view = UIView(frame: CGRect(x: x, y: y, width: 10, height: 10))
         view.backgroundColor = .black
         return view
     }
@@ -89,6 +108,7 @@ protocol ViewModelInputs {
 protocol ViewModelOutputs {
     var updateBody: ((SnakeBody) -> Void)? { get set }
     var removeBody: ((Int) -> Void)? { get set }
+    var showMessage: ((String) -> Void)? { get set }
 }
 
 class ViewModel: ViewModelInputs, ViewModelOutputs {
@@ -98,12 +118,14 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     
     var updateBody: ((SnakeBody) -> Void)?
     var removeBody: ((Int) -> Void)?
+    var showMessage: ((String) -> Void)?
     
     private var lastBodyTag = 1
     private var direction: Direction = .left
     private var currentPoint: Point
     private var boundPoint: Point
     private var snakeBodyQueue = Queue<SnakeBody>()
+    private var timer: Timer!
     
     init(startPoint: Point, bound: Point) {
         currentPoint = startPoint
@@ -111,11 +133,13 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     }
     
     func start() {
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
+       timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             let firstTag = self.removeFirstBody()
             self.updatePosition()
             self.addBody(with: firstTag)
-        }.fire()
+        }
+        
+        timer.fire()
     }
     
     private func removeFirstBody() -> Int {
@@ -131,20 +155,38 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     
     private func addBody(with tag: Int) {
         let snakeBody = SnakeBody(x: currentPoint.x, y: currentPoint.y, tag: tag)
+        
+        // Check self body hitting
+        guard !isHittingBody(nextBody: snakeBody) else {
+            timer.invalidate()
+            showMessage?("Your score is \(snakeBodyQueue.array.count)")
+            return
+        }
+        
         snakeBodyQueue.enqueue(snakeBody)
         updateBody?(snakeBody)
+    }
+    
+    private func isHittingBody(nextBody: SnakeBody) -> Bool {
+        return snakeBodyQueue.array.contains {
+            if $0 == snakeBodyQueue.array.last {
+                return false
+            } else {
+                return $0.x == nextBody.x && $0.y == nextBody.y
+            }
+        }
     }
     
     private func updatePosition() {
         switch direction {
         case .up:
-            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 25) : (currentPoint.y -= 10)
+            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 5) : (currentPoint.y -= 10)
         case .left:
-            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 25) : (currentPoint.x -= 10)
+            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 5) : (currentPoint.x -= 10)
         case .down:
-            currentPoint.y >= boundPoint.y ? (currentPoint.y = -25) : (currentPoint.y += 10)
+            currentPoint.y >= boundPoint.y ? (currentPoint.y = -5) : (currentPoint.y += 10)
         case .right:
-            currentPoint.x >= boundPoint.x ? (currentPoint.x = -25) : (currentPoint.x += 10)
+            currentPoint.x >= boundPoint.x ? (currentPoint.x = -5) : (currentPoint.x += 10)
         }
     }
     

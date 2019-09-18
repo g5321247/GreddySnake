@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct SnakeBody {
+struct SnakeBody: Equatable {
     let x: Int
     let y: Int
     let tag: Int
