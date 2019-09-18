@@ -14,6 +14,7 @@
 		C45184A8232F14B20034139F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C45184A6232F14B20034139F /* LaunchScreen.storyboard */; };
 		C45184B3232F14B20034139F /* GreedySnakeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45184B2232F14B20034139F /* GreedySnakeUITests.swift */; };
 		C45184BE232F32270034139F /* SnakeBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45184BD232F32270034139F /* SnakeBody.swift */; };
+		C45184C12331C18B0034139F /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45184C02331C18B0034139F /* Queue.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +39,7 @@
 		C45184B2232F14B20034139F /* GreedySnakeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GreedySnakeUITests.swift; sourceTree = "<group>"; };
 		C45184B4232F14B20034139F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C45184BD232F32270034139F /* SnakeBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnakeBody.swift; sourceTree = "<group>"; };
+		C45184C02331C18B0034139F /* Queue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Queue.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,7 +83,7 @@
 			children = (
 				C451849D232F14AB0034139F /* AppDelegate.swift */,
 				C451849F232F14AB0034139F /* ViewController.swift */,
-				C45184BD232F32270034139F /* SnakeBody.swift */,
+				C45184BF2331C1540034139F /* Model */,
 				C45184A1232F14AB0034139F /* Main.storyboard */,
 				C45184A4232F14B20034139F /* Assets.xcassets */,
 				C45184A6232F14B20034139F /* LaunchScreen.storyboard */,
@@ -97,6 +99,15 @@
 				C45184B4232F14B20034139F /* Info.plist */,
 			);
 			path = GreedySnakeUITests;
+			sourceTree = "<group>";
+		};
+		C45184BF2331C1540034139F /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C45184BD232F32270034139F /* SnakeBody.swift */,
+				C45184C02331C18B0034139F /* Queue.swift */,
+			);
+			path = Model;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -203,6 +214,7 @@
 				C45184A0232F14AB0034139F /* ViewController.swift in Sources */,
 				C45184BE232F32270034139F /* SnakeBody.swift in Sources */,
 				C451849E232F14AB0034139F /* AppDelegate.swift in Sources */,
+				C45184C12331C18B0034139F /* Queue.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -83,6 +83,7 @@ class ViewController: UIViewController {
 protocol ViewModelInputs {
     func updateDirection(direction: ViewModel.Direction)
     func start()
+    func eatApple()
 }
 
 protocol ViewModelOutputs {
@@ -98,10 +99,11 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     var updateBody: ((SnakeBody) -> Void)?
     var removeBody: ((Int) -> Void)?
     
-    private var tag = 1
+    private var lastBodyTag = 1
     private var direction: Direction = .left
     private var currentPoint: Point
     private var boundPoint: Point
+    private var snakeBodyQueue = Queue<SnakeBody>()
     
     init(startPoint: Point, bound: Point) {
         currentPoint = startPoint
@@ -109,14 +111,28 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     }
     
     func start() {
-
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
-            self.removeBody?(self.tag)
+            let firstTag = self.removeFirstBody()
             self.updatePosition()
-            
-            let snakeBody = SnakeBody(x: self.currentPoint.x, y: self.currentPoint.y, tag: self.tag)
-            self.updateBody?(snakeBody)
+            self.addBody(with: firstTag)
         }.fire()
+    }
+    
+    private func removeFirstBody() -> Int {
+        guard let snakebody = snakeBodyQueue.dequeue() else { return 1 }
+        removeBody?(snakebody.tag)
+        return snakebody.tag
+    }
+    
+    func eatApple() {
+        lastBodyTag += 1
+        addBody(with: lastBodyTag)
+    }
+    
+    private func addBody(with tag: Int) {
+        let snakeBody = SnakeBody(x: currentPoint.x, y: currentPoint.y, tag: tag)
+        snakeBodyQueue.enqueue(snakeBody)
+        updateBody?(snakeBody)
     }
     
     private func updatePosition() {
