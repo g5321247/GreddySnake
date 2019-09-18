@@ -133,7 +133,22 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     }
     
     func updateDirection(direction: Direction) {
-        self.direction = direction
+        if !isOppositeDirection(direction) {
+            self.direction = direction
+        }
+    }
+    
+    private func isOppositeDirection(_ direction: Direction) -> Bool {
+        switch self.direction {
+        case .down:
+            return direction == .up
+        case .up:
+            return direction == .down
+        case .left:
+            return direction == .right
+        case .right:
+            return direction == .left
+        }
     }
 }
 
