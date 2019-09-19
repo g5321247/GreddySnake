@@ -69,11 +69,14 @@ class ViewController: UIViewController {
     private func bindViewModel() {
         var outputs = viewModel.outputs
         
-        outputs.updateBody = { [weak self] (body) in
+        outputs.updateObject = { [weak self] (object) in
             guard let self = self else { return }
-            let snakeBodyView = self.createSnakeBody(x: CGFloat(body.x), y: CGFloat(body.y))
-            snakeBodyView.tag = body.tag
-            self.view.addSubview(snakeBodyView)
+            let objectView = self.createView(x: CGFloat(object.x), y: CGFloat(object.y))
+            objectView.tag = object.tag
+
+            // if tag is -1, it should be apple, otherwise it should be snake body
+            objectView.backgroundColor = (object.tag == -1) ? .red : .black
+            self.view.addSubview(objectView)
         }
         
         outputs.removeBody = { [weak self] (tag) in
@@ -99,9 +102,8 @@ class ViewController: UIViewController {
         viewModel.inputs.start(startPoint: .init(x: x, y: y))
     }
     
-    private func createSnakeBody(x: CGFloat, y: CGFloat) -> UIView {
+    private func createView(x: CGFloat, y: CGFloat) -> UIView {
         let view = UIView(frame: CGRect(x: x, y: y, width: 10, height: 10))
-        view.backgroundColor = .black
         return view
     }
 }
@@ -113,7 +115,7 @@ protocol ViewModelInputs {
 }
 
 protocol ViewModelOutputs {
-    var updateBody: ((SnakeBody) -> Void)? { get set }
+    var updateObject: ((Object) -> Void)? { get set }
     var removeBody: ((Int) -> Void)? { get set }
     var showMessage: ((String) -> Void)? { get set }
 }
@@ -123,7 +125,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     var inputs: ViewModelInputs { return self }
     var outputs: ViewModelOutputs { return self }
     
-    var updateBody: ((SnakeBody) -> Void)?
+    var updateObject: ((Object) -> Void)?
     var removeBody: ((Int) -> Void)?
     var showMessage: ((String) -> Void)?
     
@@ -131,7 +133,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     private var direction: Direction = .left
     private var currentPoint: Point!
     private var boundPoint: Point
-    private var snakeBodyQueue = Queue<SnakeBody>()
+    private var snakeBodyQueue = Queue<Object>()
     private var timer: Timer!
     
     init(bound: Point) {
@@ -140,7 +142,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     
     func start(startPoint: Point) {
         currentPoint = startPoint
-        setDefault()
+        setAsDefault()
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             let firstTag = self.removeFirstBody()
@@ -151,15 +153,30 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
         timer.fire()
     }
     
-    private func setDefault() {
+    private func setAsDefault() {
         snakeBodyQueue.clearQueue()
         direction = .left
+        createNewApple()
     }
     
+    // 再改
     private func removeFirstBody() -> Int {
         guard let snakebody = snakeBodyQueue.dequeue() else { return 1 }
         removeBody?(snakebody.tag)
         return snakebody.tag
+    }
+    
+    private func createNewApple() {
+        let x = Int.random(in: 0 ... (boundPoint.x - 10))
+        let y = Int.random(in: 0 ... (boundPoint.y - 10))
+
+        // if the place where apple grow places snake body already, it should find other random place
+        guard !isHittingBody(next: x, y: y) else {
+            return createNewApple()
+        }
+        
+        let apple = Object(x: x, y: y, tag: -1)
+        updateObject?(apple)
     }
     
     func eatApple() {
@@ -168,25 +185,25 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     }
     
     private func addBody(with tag: Int) {
-        let snakeBody = SnakeBody(x: currentPoint.x, y: currentPoint.y, tag: tag)
+        let snakeBody = Object(x: currentPoint.x, y: currentPoint.y, tag: tag)
         
         // Check self body hitting
-        guard !isHittingBody(nextBody: snakeBody) else {
+        guard !isHittingBody(next: snakeBody.x, y: snakeBody.y) else {
             timer.invalidate()
             showMessage?("Your score is \(snakeBodyQueue.array.count)")
             return
         }
         
         snakeBodyQueue.enqueue(snakeBody)
-        updateBody?(snakeBody)
+        updateObject?(snakeBody)
     }
     
-    private func isHittingBody(nextBody: SnakeBody) -> Bool {
+    private func isHittingBody(next x: Int, y: Int) -> Bool {
         return snakeBodyQueue.array.contains {
             if $0 == snakeBodyQueue.array.last {
                 return false
             } else {
-                return $0.x == nextBody.x && $0.y == nextBody.y
+                return $0.x == x && $0.y == y
             }
         }
     }
