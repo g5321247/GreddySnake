@@ -172,8 +172,8 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     }
     
     private func createNewApple() -> Object {
-        let x = Int.random(in: 0 ... (boundPoint.x))
-        let y = Int.random(in: 0 ... (boundPoint.y))
+        let x = Int.random(in: 0 ... (boundPoint.x - 50))
+        let y = Int.random(in: 0 ... (boundPoint.y - 50))
 
         // if the place where apple grow places snake body already, it should find other random place
         guard !isHittingBody(next: x, y: y) else {
@@ -220,13 +220,13 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     private func updatePosition() {
         switch direction {
         case .up:
-            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 10) : (currentPoint.y -= 10)
+            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y - 10) : (currentPoint.y -= 10)
         case .left:
-            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 10) : (currentPoint.x -= 10)
+            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x - 10) : (currentPoint.x -= 10)
         case .down:
-            currentPoint.y >= boundPoint.y ? (currentPoint.y = 0) : (currentPoint.y += 10)
+            currentPoint.y >= boundPoint.y ? (currentPoint.y = 10) : (currentPoint.y += 10)
         case .right:
-            currentPoint.x >= boundPoint.x ? (currentPoint.x = 0) : (currentPoint.x += 10)
+            currentPoint.x >= boundPoint.x ? (currentPoint.x = 10) : (currentPoint.x += 10)
         }
     }
     
