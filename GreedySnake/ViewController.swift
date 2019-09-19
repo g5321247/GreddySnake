@@ -40,11 +40,6 @@ class ViewController: UIViewController {
         self.view.addGestureRecognizer(swipeDown)
         self.view.addGestureRecognizer(swipeLeft)
         self.view.addGestureRecognizer(swipeRight)
-        
-        // 測試
-        let touch = UITapGestureRecognizer(target: self, action: #selector(tap))
-        view.addGestureRecognizer(touch)
-
     }
     
     @objc func handleGesture(gesture: UISwipeGestureRecognizer) {
@@ -62,10 +57,6 @@ class ViewController: UIViewController {
         }
     }
     
-    @objc func tap(gesture: UITapGestureRecognizer) {
-        viewModel.inputs.eatApple()
-    }
-
     private func bindViewModel() {
         var outputs = viewModel.outputs
         
@@ -111,7 +102,6 @@ class ViewController: UIViewController {
 protocol ViewModelInputs {
     func updateDirection(direction: ViewModel.Direction)
     func start(startPoint: ViewModel.Point)
-    func eatApple()
 }
 
 protocol ViewModelOutputs {
@@ -135,6 +125,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     private var boundPoint: Point
     private var snakeBodyQueue = Queue<Object>()
     private var timer: Timer!
+    private var currentApple: Object!
     
     init(bound: Point) {
         boundPoint = bound
@@ -143,20 +134,34 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     func start(startPoint: Point) {
         currentPoint = startPoint
         setAsDefault()
-        
+        move()
+    }
+    
+    private func move() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
             let firstTag = self.removeFirstBody()
             self.updatePosition()
             self.addBody(with: firstTag)
+            
+            self.isEattenApple() ? self.eatApple() : nil
         }
         
         timer.fire()
     }
     
+    private func isEattenApple() -> Bool {
+        return snakeBodyQueue.array.contains {
+            let rangeOfX = self.currentApple.x - 10 ... self.currentApple.x + 10
+            let rangeOfY = self.currentApple.y - 10 ... self.currentApple.y + 10
+            
+            return rangeOfX.contains($0.x) && rangeOfY.contains($0.y)
+        }
+    }
+    
     private func setAsDefault() {
         snakeBodyQueue.clearQueue()
         direction = .left
-        createNewApple()
+        currentApple = createNewApple()
     }
     
     // 再改
@@ -166,9 +171,9 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
         return snakebody.tag
     }
     
-    private func createNewApple() {
-        let x = Int.random(in: 0 ... (boundPoint.x - 10))
-        let y = Int.random(in: 0 ... (boundPoint.y - 10))
+    private func createNewApple() -> Object {
+        let x = Int.random(in: 0 ... (boundPoint.x))
+        let y = Int.random(in: 0 ... (boundPoint.y))
 
         // if the place where apple grow places snake body already, it should find other random place
         guard !isHittingBody(next: x, y: y) else {
@@ -177,11 +182,15 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
         
         let apple = Object(x: x, y: y, tag: -1)
         updateObject?(apple)
+        
+        return apple
     }
     
-    func eatApple() {
+    private func eatApple() {
         lastBodyTag += 1
+        removeBody?(-1)
         addBody(with: lastBodyTag)
+        currentApple = createNewApple()
     }
     
     private func addBody(with tag: Int) {
@@ -211,13 +220,13 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     private func updatePosition() {
         switch direction {
         case .up:
-            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 5) : (currentPoint.y -= 10)
+            currentPoint.y <= 0 ? currentPoint.y = (boundPoint.y + 10) : (currentPoint.y -= 10)
         case .left:
-            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 5) : (currentPoint.x -= 10)
+            currentPoint.x <= 0 ? currentPoint.x = (boundPoint.x + 10) : (currentPoint.x -= 10)
         case .down:
-            currentPoint.y >= boundPoint.y ? (currentPoint.y = -5) : (currentPoint.y += 10)
+            currentPoint.y >= boundPoint.y ? (currentPoint.y = 0) : (currentPoint.y += 10)
         case .right:
-            currentPoint.x >= boundPoint.x ? (currentPoint.x = -5) : (currentPoint.x += 10)
+            currentPoint.x >= boundPoint.x ? (currentPoint.x = 0) : (currentPoint.x += 10)
         }
     }
     
