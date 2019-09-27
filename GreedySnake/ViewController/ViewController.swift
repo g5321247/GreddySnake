@@ -11,6 +11,7 @@ import UIKit
 class ViewController: UIViewController {
     
     var viewModel: ViewModel!
+    var displayLnk: CADisplayLink!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,9 +25,19 @@ class ViewController: UIViewController {
             .init(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY))
         )
         setupUI()
+        
+        displayLnk = CADisplayLink(target: self, selector: #selector(move))
+        displayLnk.preferredFramesPerSecond = 120
+        displayLnk.add(to: RunLoop.current, forMode: .default)
+        
+    }
+    
+    @objc func move() {
+        viewModel.inputs.move()
     }
     
     private func setupUI() {
+                
         let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
         swipeUp.direction = .up
         let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(handleGesture))
@@ -78,6 +89,8 @@ class ViewController: UIViewController {
         }
         
         outputs.showMessage = { [weak self] (message) in
+            self?.displayLnk.invalidate()
+            
             let alertVc = UIAlertController(title: "Game Over", message: message, preferredStyle: .alert)
             let action = UIAlertAction(title: "確定", style: .default, handler: { (_) in
                 self?.restart(x: Int(UIScreen.main.bounds.midX), y: Int(UIScreen.main.bounds.midY))

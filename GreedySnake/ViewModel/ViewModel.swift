@@ -11,6 +11,7 @@ import Foundation
 protocol ViewModelInputs {
     func updateDirection(direction: ViewModel.Direction)
     func start(startPoint: ViewModel.Point)
+    func move()
 }
 
 protocol ViewModelOutputs {
@@ -33,7 +34,7 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     private var currentPoint: Point!
     private var boundPoint: Point
     private var snakeBodyQueue = Queue<Object>()
-    private var timer: Timer!
+//    private var timer: Timer!
     private var currentApple: Object!
     
     init(bound: Point) {
@@ -43,19 +44,14 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
     func start(startPoint: Point) {
         currentPoint = startPoint
         setAsDefault()
-        move()
     }
     
-    private func move() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { (_) in
-            let firstTag = self.removeFirstBody()
-            self.updatePosition()
-            self.addBody(with: firstTag)
-            
-            self.isEattenApple() ? self.eatApple() : nil
-        }
+    func move() {
+        let firstTag = self.removeFirstBody()
+        self.updatePosition()
+        self.addBody(with: firstTag)
         
-        timer.fire()
+        self.isEattenApple() ? self.eatApple() : nil
     }
     
     private func isEattenApple() -> Bool {
@@ -106,7 +102,6 @@ class ViewModel: ViewModelInputs, ViewModelOutputs {
         
         // Check self body hitting
         guard !isHittingBody(next: snakeBody.x, y: snakeBody.y) else {
-            timer.invalidate()
             showMessage?("Your score is \(snakeBodyQueue.array.count)")
             return
         }
